@@ -1,7 +1,3 @@
-import storePretender from "helpers/store-pretender";
-import fixturePretender from "helpers/fixture-pretender";
-import flagPretender from "helpers/flag-pretender";
-
 export function parsePostData(query) {
   const result = {};
   query.split("&").forEach(function(part) {
@@ -38,9 +34,13 @@ export let fixturesByUrl;
 
 export default function() {
   const server = new Pretender(function() {
-    storePretender.call(this, helpers);
-    flagPretender.call(this, helpers);
-    fixturesByUrl = fixturePretender.call(this, helpers);
+    // Autoload any `*-pretender` files
+    Object.keys(requirejs.entries).forEach(e => {
+      let m = e.match(/^helpers\/([a-z]+)\-pretender$/);
+      if (m && m[1] !== "create") {
+        requirejs(e).default.call(this, helpers);
+      }
+    });
 
     this.get("/admin/plugins", () => response({ plugins: [] }));
 
